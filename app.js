@@ -3,11 +3,21 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-
+const mongoose=require("mongoose");
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-const promotionsRouter=require('./routes/promotions/promorouter');
+const promotionsRouter=require('./routes/promotions/promotionRouter');
 const leaderRouter=require('./routes/leader/leaderRouter');
+const dishRouter=require("./routes/dish/dishRouter");
+
+
+const url="mongodb://localhost:27017/Confusion";
+const connect=mongoose.connect(url);
+
+connect.then((db)=>{
+  console.log("DataBase Connected Successfully");
+},((err)=>console.log("Connection Failed")));
+
 var app = express();
 
 // view engine setup
@@ -24,6 +34,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use("/promotions",promotionsRouter);
 app.use("/leaders",leaderRouter);
+app.use("/dishes",dishRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

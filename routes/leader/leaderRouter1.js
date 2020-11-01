@@ -3,6 +3,11 @@ const bodyParser=require("body-parser");
 const leaders=express.Router();
 leaders.use(bodyParser.json());
 leaders.route("/")
+.all((req,res,next)=>{
+    res.statusCode=200;
+    res.setHeader("content-type","plain/text");
+    next();
+})
 .get((req,res,next)=>{
     res.end("will get the details of leaders");
 })
@@ -18,6 +23,11 @@ leaders.route("/")
 });
 
 leaders.route("/:id")
+.all((req,res,next)=>{
+     res.statusCode=200;
+     res.setHeader("content-type","plain/text");
+     next();
+})
 .get((req,res,next)=>{
     res.end("will get the details of leaders of "+req.params.id);
 })
