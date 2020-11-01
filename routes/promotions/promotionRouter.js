@@ -1,37 +1,81 @@
 const express=require("express");
 const bodyParser=require("body-parser");
+const Promotion=require("../../models/promotions");
 const promotions=express.Router();
 promotions.use(bodyParser.json());
 
 promotions.route("/")
 .get((req,res,next)=>{
-    res.end("will get the details of promotions");
+    Promotion.find({})
+    .then((promotions)=>{
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(promotions);
+    },((err)=>next(err)))
+    .catch((err)=>next(err));
 })
 .post((req,res,next)=>{
-    res.end("will post "+req.body.dish +" to the promotions sections");
+    Promotion.create(req.body)
+    .then((promotion)=>{
+        console.log("Promotion Created");
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(promotion);
+    },((err)=>next(err)))
+    .catch((err)=>next(err));
 })
-.put((req,res)=>{
+.put((req,res,next)=>{
     res.statusCode=403;
     res.end("put operation is denied");
 })
 .delete((req,res,next)=>{
-    res.end("will delete the details of promotions");
+    Promotion.remove()
+    .then((resp)=>{
+        console.log("Promotions Deleted Successfully");
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(resp);
+    },((err)=>next(err)))
+    .catch((err)=>next(err));
 });
 
-promotions.route("/:id")
+promotions.route("/:promoid")
 .get((req,res,next)=>{
-    
-    res.end("will get the details of promotion of "+req.params.id);
+    Promotion.findById(req.params.promoid)
+    .then((promotion)=>{
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(promotion);
+    },((err)=>next(err)))
+    .catch((err)=>next(err));
 })
 .post((req,res,next)=>{
     res.statusCode=403;
-    res.end("post operation of "+ req.params.id +"is denied");
+    res.end("post operation of "+ req.params.promoid +"is denied");
 })
-.put((req,res)=>{
-    res.end("promotion details of "+ req.params.id +" is updated");
+.put((req,res,next)=>{
+    Promotion.findByIdAndUpdate(req.params.promoid,
+        {
+          $set:req.body
+        },
+        {
+            new:true
+        })
+    .then((promotion)=>{
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(promotion);
+    },((err)=>next(err)))
+    .catch((err)=>next(err));
 })
 .delete((req,res,next)=>{
-    res.end("deleting the details of promotion of "+ req.params.id );
+    Promotion.findByIdAndRemove(req.params.promoid)
+    .then((resp)=>{
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(resp);
+    },((err)=>next(err)))
+    .catch((err)=>next(err));
 });
 module.exports=promotions;
 
