@@ -27,33 +27,51 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('1233'));
 
 function auth(req,res,next)
 {
-  console.log(req.headers);
-  var authHeader=req.headers.authorization;
-  if(!(authHeader))
+  console.log(req.signedCookies);
+  //if user is authenticating for first time
+  if(!req.signedCookies.user)
   {
-    var err=new Error('Authorization Is Required');
-    err.status=403;
-    res.setHeader('WWW-Authenticate','Basic')
-    return next(err);
-  }
-  var auth=Buffer.from(authHeader.split(' ')[1],'base64').toString().split(':');
-  let userName=auth[0];
-  let password=auth[1];
-  console.log(userName+" "+password);
-  if(userName=="admin" && password=="password")
-  {
-    next();
+    var authHeader=req.headers.authorization;
+    if(!(authHeader))
+    {
+      var err=new Error('Authorization Is Required');
+      err.status=403;
+      res.setHeader('WWW-Authenticate','Basic')
+      return next(err);
+    }
+    var auth=Buffer.from(authHeader.split(' ')[1],'base64').toString().split(':');
+    let userName=auth[0];
+    let password=auth[1];
+    console.log(userName+" "+password);
+    if(userName=="admin" && password=="password")
+    {
+      res.cookie('user','admin',{signed:true});
+      next();
+    }
+    else
+    {
+      var err=new Error('Authorization Failed');
+      err.status=401;
+      res.setHeader('WWW-Authenticate','Basic')
+      return next(err);
+    }
   }
   else
   {
-    var err=new Error('Authorization Failed');
-    err.status=401;
-    res.setHeader('WWW-Authenticate','Basic')
-    return next(err);
+    if(req.signedCookies.user=='admin')
+    {
+      next();
+    }
+    else{
+      var err=new Error('Authorization Failed');
+      err.status=401;
+      res.setHeader('WWW-Authenticate','Basic')
+      return next(err);
+    }
   }
 }
 app.use(auth);
