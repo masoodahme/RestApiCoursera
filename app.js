@@ -4,11 +4,15 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const mongoose=require("mongoose");
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const session=require("express-session");
+const FileStore=require("session-file-store")(session);
+
+const indexRouter = require('./routes/index');
+const  usersRouter = require('./routes/users');
 const promotionsRouter=require('./routes/promotions/promotionRouter');
 const leaderRouter=require('./routes/leader/leaderRouter');
 const dishRouter=require("./routes/dish/dishRouter");
+
 
 
 const url="mongodb://localhost:27017/Confusion";
@@ -27,42 +31,32 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser('1233'));
+//app.use(cookieParser('1233'));
+app.use(session({
+  name:'session-id',
+  secret:'122iewdcdakfjda',
+  saveUninitialized:false,
+  resave:false,
+  store:new FileStore()
+}));
+
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
 
 function auth(req,res,next)
 {
-  console.log(req.signedCookies);
+  console.log(req.session);
   //if user is authenticating for first time
-  if(!req.signedCookies.user)
+  if(!req.session.user)
   {
-    var authHeader=req.headers.authorization;
-    if(!(authHeader))
-    {
-      var err=new Error('Authorization Is Required');
-      err.status=403;
-      res.setHeader('WWW-Authenticate','Basic')
-      return next(err);
-    }
-    var auth=Buffer.from(authHeader.split(' ')[1],'base64').toString().split(':');
-    let userName=auth[0];
-    let password=auth[1];
-    console.log(userName+" "+password);
-    if(userName=="admin" && password=="password")
-    {
-      res.cookie('user','admin',{signed:true});
-      next();
-    }
-    else
-    {
-      var err=new Error('Authorization Failed');
+      var err=new Error('You are not Authorizated');
       err.status=401;
       res.setHeader('WWW-Authenticate','Basic')
       return next(err);
-    }
   }
   else
   {
-    if(req.signedCookies.user=='admin')
+    if(req.session.user=='authenticated')
     {
       next();
     }
@@ -77,8 +71,6 @@ function auth(req,res,next)
 app.use(auth);
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use("/promotions",promotionsRouter);
 app.use("/leaders",leaderRouter);
 app.use("/dishes",dishRouter);
