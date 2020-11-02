@@ -28,6 +28,35 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+function auth(req,res,next)
+{
+  console.log(req.headers);
+  var authHeader=req.headers.authorization;
+  if(!(authHeader))
+  {
+    var err=new Error('Authorization Is Required');
+    err.status=403;
+    res.setHeader('WWW-Authenticate','Basic')
+    return next(err);
+  }
+  var auth=Buffer.from(authHeader.split(' ')[1],'base64').toString().split(':');
+  let userName=auth[0];
+  let password=auth[1];
+  console.log(userName+" "+password);
+  if(userName=="admin" && password=="password")
+  {
+    next();
+  }
+  else
+  {
+    var err=new Error('Authorization Failed');
+    err.status=401;
+    res.setHeader('WWW-Authenticate','Basic')
+    return next(err);
+  }
+}
+app.use(auth);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
@@ -37,11 +66,13 @@ app.use("/leaders",leaderRouter);
 app.use("/dishes",dishRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
+  console.log("errr ");
   next(createError(404));
 });
 
 // error handler
 app.use(function(err, req, res, next) {
+   console.log("errr 1");
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
